@@ -26,6 +26,9 @@ dependencies:
   path_provider: ^2.1.3
   image_picker: ^1.0.4
 
+  #Guardado de imagenes
+  gal: ^2.3.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

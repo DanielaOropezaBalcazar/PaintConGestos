@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -288,8 +289,7 @@ class MainMenu extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
+              SystemNavigator.pop();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color.fromARGB(255, 206, 134, 172),

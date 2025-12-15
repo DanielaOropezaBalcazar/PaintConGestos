@@ -1,3 +1,6 @@
+import 'dart:ui' as ui;
+import 'dart:typed_data';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:camera/camera.dart';
@@ -26,22 +29,63 @@ class PaintingScreen extends StatefulWidget {
 
 class _PaintingScreenState extends State<PaintingScreen> {
   @override
+  final GlobalKey _canvasGlobalKey = GlobalKey();
+
   void initState() {
     super.initState();
     // Inicializar cámara al entrar
     context.read<CameraBloc>().add(InitializeCamera(widget.cameras));
   }
 
+  Future<void> _saveCanvasImage() async {
+    try {
+      // Buscar el objeto de renderizado usando la key
+      RenderRepaintBoundary? boundary = _canvasGlobalKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      
+      if (boundary == null) return;
+
+      // Convertir a imagen (pixelRatio 3.0 para alta calidad)
+      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      
+      // Convertir a bytes (PNG)
+      ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      
+      if (byteData != null) {
+        final Uint8List pngBytes = byteData.buffer.asUint8List();
+        
+        // Enviar evento al Bloc
+        if (mounted) {
+          context.read<PaintingBloc>().add(SaveImageToGallery(pngBytes));
+        }
+      }
+    } catch (e) {
+      debugPrint("Error capturando canvas: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          children: [
-            _buildAppBar(),
-            _buildCanvas(),
-            _buildControlPanel(),
-          ],
+        child: BlocListener<PaintingBloc, PaintingState>( // AÑADIR LISTENER PARA MOSTRAR MENSAJES
+          listener: (context, state) {
+            if (state.saveStatus == SaveStatus.success) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('✅ ¡Dibujo guardado en la galería!'), backgroundColor: Colors.green),
+              );
+            } else if (state.saveStatus == SaveStatus.failure) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('❌ Error al guardar el dibujo'), backgroundColor: Colors.red),
+              );
+            }
+          },
+          child: Column(
+            children: [
+              _buildAppBar(),
+              _buildCanvas(),
+              _buildControlPanel(),
+            ],
+          ),
         ),
       ),
     );
@@ -92,6 +136,17 @@ class _PaintingScreenState extends State<PaintingScreen> {
                     },
                     tooltip: 'Limpiar',
                   ),
+                  if (state.saveStatus == SaveStatus.loading)
+                    const Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
+                    )
+                  else
+                    IconButton(
+                      icon: const Icon(Icons.save_alt, color: Colors.white, size: 20),
+                      onPressed: _saveCanvasImage, // Llamar a la función
+                      tooltip: 'Guardar Imagen',
+                    ),
                 ],
               );
             },
@@ -102,17 +157,22 @@ class _PaintingScreenState extends State<PaintingScreen> {
   }
 
   Widget _buildCanvas() {
-    return Expanded(
-      child: Container(
-        color: Colors.white,
-        child: BlocBuilder<PaintingBloc, PaintingState>(
-          builder: (context, state) {
-            return PaintingCanvas(strokes: state.strokes);
-          },
-        ),
+  return Expanded(
+    child: Container(
+      color: Colors.white,
+      // 1. Necesitas el BlocBuilder para obtener los 'strokes' (state)
+      child: BlocBuilder<PaintingBloc, PaintingState>(
+        builder: (context, state) {
+          // 2. Aquí es donde va el RepaintBoundary
+          return RepaintBoundary(
+            key: _canvasGlobalKey, // La key global que creamos
+            child: PaintingCanvas(strokes: state.strokes),
+          );
+        },
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildControlPanel() {
     return Container(
