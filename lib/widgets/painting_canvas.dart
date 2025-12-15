@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../painting_state.dart';
+import '../models/paint_stroke.dart';
 
 class PaintingCanvas extends StatelessWidget {
   final List<PaintStroke> strokes;
@@ -27,9 +27,12 @@ class _PaintingCanvasPainter extends CustomPainter {
       ..color = Colors.white
       ..style = PaintingStyle.fill;
     
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), backgroundPaint);
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      backgroundPaint,
+    );
 
-    // Dibujar trazos
+    // Dibujar cada trazo
     for (final stroke in strokes) {
       if (stroke.points.length < 2) continue;
       

@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
+/// Servicio de cámara LEGACY - mantenido por compatibilidad
+/// La nueva arquitectura BLoC usa PlatformCameraService
 class CameraService {
   late CameraController _cameraController;
   late FaceDetector _faceDetector;
@@ -72,7 +74,7 @@ class CameraService {
       final faces = await _faceDetector.processImage(inputImage);
       _onFaceDetected?.call(faces.isNotEmpty ? faces.first : null);
     } catch (e) {
-      // Error 
+      // Error silencioso
     } finally {
       _isProcessing = false;
     }
@@ -187,7 +189,6 @@ class CameraService {
     await _faceDetector.close();
   }
 
-  //Vista previa de la camara
   Widget buildCameraPreview({
     double height = 120,
     Color borderColor = const Color(0xFF90CAF9),
@@ -206,7 +207,6 @@ class CameraService {
     );
   }
 
-  //Muestra cuando se inicializa la camara
   static Widget buildCameraLoading() {
     return Container(
       color: Colors.black,

@@ -1,28 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:camera/camera.dart';
-import 'main_menu.dart';
-import 'home_page.dart';
-import 'painting_state.dart';
+import 'screens/main_menu.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   try {
     final cameras = await availableCameras();
-    runApp(
-      ChangeNotifierProvider(
-        create: (context) => PaintingState(),
-        child: FacePaintApp(cameras: cameras),
-      ),
-    );
+    runApp(FacePaintApp(cameras: cameras));
   } catch (e) {
     runApp(
       MaterialApp(
         home: Scaffold(
-          body: Center(
-            child: Text('Error: $e'),
-          ),
+          body: Center(child: Text('Error inicializando cámaras: $e')),
         ),
       ),
     );
@@ -44,11 +34,7 @@ class FacePaintApp extends StatelessWidget {
         fontFamily: 'Roboto',
       ),
       debugShowCheckedModeBanner: false,
-      initialRoute: '/',
-      routes: {
-        '/': (context) => MainMenu(cameras: cameras),
-        '/paint': (context) => HomePage(cameras: cameras),
-      },
+      home: MainMenu(cameras: cameras),
     );
   }
 }

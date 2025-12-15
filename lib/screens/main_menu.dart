@@ -1,24 +1,25 @@
-import 'package:face_paint_gestures/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/camera/camera_bloc.dart';
+import '../bloc/gesture/gesture_bloc.dart';
+import '../bloc/painting/painting_bloc.dart';
+import '../repositories/camera_repository.dart';
+import '../repositories/gesture_repository.dart';
+import 'painting_screen.dart';
 
-class MainMenu extends StatefulWidget {
+class MainMenu extends StatelessWidget {
   final List<CameraDescription> cameras;
   
   const MainMenu({super.key, required this.cameras});
 
-  @override
-  State<MainMenu> createState() => _MainMenuState();
-}
-
-class _MainMenuState extends State<MainMenu> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/background.jpg'), //Fondo
+            image: AssetImage('assets/background.jpg'),
             fit: BoxFit.cover,
           ),
         ),
@@ -32,7 +33,6 @@ class _MainMenuState extends State<MainMenu> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Titulo
                 const Text(
                   '🎨 PINTURA CON GESTOS FACIALES',
                   style: TextStyle(
@@ -46,16 +46,16 @@ class _MainMenuState extends State<MainMenu> {
                 
                 const SizedBox(height: 30),
                 
-                //Ingresar al Paint
                 _buildMenuButton(
                   icon: Icons.palette,
                   text: 'Ingresar',
                   color: const Color.fromARGB(255, 206, 134, 172),
                   onPressed: () {
+                    // Navegar con BLoCs
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => HomePage(cameras: widget.cameras),
+                        builder: (context) => _buildPaintingScreenWithBlocs(),
                       ),
                     );
                   },
@@ -63,7 +63,6 @@ class _MainMenuState extends State<MainMenu> {
                 
                 const SizedBox(height: 20),
                 
-                //Tutorial
                 _buildMenuButton(
                   icon: Icons.help_outline,
                   text: 'Tutorial',
@@ -75,7 +74,6 @@ class _MainMenuState extends State<MainMenu> {
                 
                 const SizedBox(height: 20),
                 
-                //Salir
                 _buildMenuButton(
                   icon: Icons.exit_to_app,
                   text: 'Salir',
@@ -96,6 +94,43 @@ class _MainMenuState extends State<MainMenu> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  /// Crea la pantalla de pintura con todos los BLoCs
+  Widget _buildPaintingScreenWithBlocs() {
+    final cameraRepository = CameraRepository();
+    final gestureRepository = GestureRepository(
+      colors: const [
+        Colors.red,
+        Colors.blue,
+        Colors.green,
+        Colors.yellow,
+        Colors.purple,
+        Colors.orange,
+        Colors.pink,
+        Colors.teal,
+        Colors.black,
+      ],
+    );
+
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<CameraBloc>(
+          create: (context) => CameraBloc(cameraRepository: cameraRepository),
+        ),
+        BlocProvider<GestureBloc>(
+          create: (context) => GestureBloc(gestureRepository: gestureRepository),
+        ),
+        BlocProvider<PaintingBloc>(
+          create: (context) => PaintingBloc(),
+        ),
+      ],
+      child: FaceToGestureListener(
+        child: GestureToPaintingListener(
+          child: PaintingScreen(cameras: cameras),
         ),
       ),
     );
@@ -148,10 +183,7 @@ class _MainMenuState extends State<MainMenu> {
           children: [
             Icon(Icons.help, color: Color.fromARGB(255, 206, 134, 172)),
             SizedBox(width: 10),
-            Text(
-              '📚 TUTORIAL',
-              style: TextStyle(color: Colors.white),
-            ),
+            Text('📚 TUTORIAL', style: TextStyle(color: Colors.white)),
           ],
         ),
         content: SingleChildScrollView(
@@ -176,7 +208,7 @@ class _MainMenuState extends State<MainMenu> {
               const SizedBox(height: 15),
               _buildTutorialStep(
                 '🎨 CAMBIAR COLOR',
-                'INCLINA LA CABEZA A LA DERECHA\npara cambiar entre 10 colores',
+                'INCLINA LA CABEZA A LA DERECHA\npara cambiar entre colores',
               ),
               const SizedBox(height: 15),
               _buildTutorialStep(
@@ -188,24 +220,6 @@ class _MainMenuState extends State<MainMenu> {
                 '🗑️ LIMPIAR TODO',
                 'MIRA HACIA ARRIBA\npara borrar todo el lienzo',
               ),
-              const SizedBox(height: 15),
-              _buildTutorialStep(
-                '⚙️ CONTROLES',
-                '• Barra superior: Herramientas\n• Panel inferior: Ajustes\n• Cámara: Detección en tiempo real',
-              ),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 206, 134, 172),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.pinkAccent),
-                ),
-                child: const Text(
-                  '💡 CONSEJO: Los gestos deben ser claros y mantenidos por 1 segundo',
-                  style: TextStyle(color: Colors.white, fontSize: 12),
-                ),
-              ),
             ],
           ),
         ),
@@ -214,7 +228,7 @@ class _MainMenuState extends State<MainMenu> {
             onPressed: () => Navigator.pop(context),
             child: const Text(
               'Entendido',
-              style: TextStyle(color: Color.fromARGB(255, 206, 134, 172),),
+              style: TextStyle(color: Color.fromARGB(255, 206, 134, 172)),
             ),
           ),
         ],
@@ -258,38 +272,24 @@ class _MainMenuState extends State<MainMenu> {
         backgroundColor: const Color.fromARGB(199, 46, 43, 121),
         title: const Row(
           children: [
-            Icon(Icons.warning, color: const Color.fromARGB(255, 206, 134, 172),),
+            Icon(Icons.warning, color: Color.fromARGB(255, 206, 134, 172)),
             SizedBox(width: 10),
-            Text(
-              '¿Salir de la app?',
-              style: TextStyle(color: Colors.white),
-            ),
+            Text('¿Salir de la app?', style: TextStyle(color: Colors.white)),
           ],
         ),
         content: const Text(
-          '¿Estás seguro de que quieres salir?\nTu progreso no guardado se perderá.',
+          '¿Estás seguro de que quieres salir?',
           style: TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'CANCELAR',
-              style: TextStyle(color: Colors.grey),
-            ),
+            child: const Text('CANCELAR', style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () {
-              // Cerrar la app
-              Navigator.pop(context); 
-              Navigator.pop(context); 
-              
-              Future.delayed(const Duration(milliseconds: 300), () {
-                
-                if (Navigator.canPop(context)) {
-                  Navigator.pop(context);
-                }
-              });
+              Navigator.pop(context);
+              Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color.fromARGB(255, 206, 134, 172),
