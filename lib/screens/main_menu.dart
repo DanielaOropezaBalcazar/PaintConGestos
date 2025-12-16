@@ -1,7 +1,6 @@
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import '../repositories/camera_repository.dart';
-import '../repositories/gesture_repository.dart';
 import 'painting_screen.dart';
 
 class MainMenu extends StatelessWidget {
@@ -256,8 +255,7 @@ class MainMenu extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
+              SystemNavigator.pop();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color.fromARGB(255, 206, 134, 172),

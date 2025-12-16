@@ -2,6 +2,8 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import '../../models/paint_stroke.dart';
 
+enum SaveStatus { initial, loading, success, failure }
+
 class PaintingState extends Equatable {
   final List<PaintStroke> strokes;
   final Color currentColor;
@@ -9,6 +11,7 @@ class PaintingState extends Equatable {
   final bool isErasing;
   final String gestureMessage;
   final PaintStroke? currentStroke;
+  final SaveStatus saveStatus;
 
   const PaintingState({
     this.strokes = const [],
@@ -17,6 +20,7 @@ class PaintingState extends Equatable {
     this.isErasing = false,
     this.gestureMessage = 'En espera...',
     this.currentStroke,
+    this.saveStatus = SaveStatus.initial,
   });
 
   factory PaintingState.initial() {
@@ -26,6 +30,7 @@ class PaintingState extends Equatable {
       currentStrokeWidth: 5.0,
       isErasing: false,
       gestureMessage: 'En espera...',
+      saveStatus: SaveStatus.initial,
     );
   }
 
@@ -36,6 +41,7 @@ class PaintingState extends Equatable {
     bool? isErasing,
     String? gestureMessage,
     PaintStroke? currentStroke,
+    SaveStatus? saveStatus,
   }) {
     return PaintingState(
       strokes: strokes ?? this.strokes,
@@ -44,6 +50,7 @@ class PaintingState extends Equatable {
       isErasing: isErasing ?? this.isErasing,
       gestureMessage: gestureMessage ?? this.gestureMessage,
       currentStroke: currentStroke ?? this.currentStroke,
+      saveStatus: saveStatus ?? this.saveStatus,
     );
   }
 
@@ -55,5 +62,6 @@ class PaintingState extends Equatable {
         isErasing,
         gestureMessage,
         currentStroke,
+        saveStatus,
       ];
 }

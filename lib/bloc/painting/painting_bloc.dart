@@ -1,3 +1,4 @@
+import 'package:gal/gal.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
 import 'painting_event.dart';
@@ -15,6 +16,35 @@ class PaintingBloc extends Bloc<PaintingEvent, PaintingState> {
     on<UndoStroke>(_onUndoStroke);
     on<ClearCanvas>(_onClearCanvas);
     on<UpdateGestureMessage>(_onUpdateGestureMessage);
+    on<SaveImageToGallery>(_onSaveImageToGallery);
+  }
+
+  Future<void> _onSaveImageToGallery(
+    SaveImageToGallery event,
+    Emitter<PaintingState> emit,
+  ) async {
+    emit(state.copyWith(saveStatus: SaveStatus.loading));
+
+    try {
+      // Verifica permisos (Gal lo maneja, pero es bueno saberlo)
+      final hasAccess = await Gal.hasAccess();
+      if (!hasAccess) {
+        await Gal.requestAccess();
+      }
+
+      // Guardar la imagen en la galería
+      await Gal.putImageBytes(event.imageBytes, name: "dibujo_${DateTime.now().millisecondsSinceEpoch}");
+
+      emit(state.copyWith(saveStatus: SaveStatus.success));
+      
+      // Resetear estado a initial para permitir guardar de nuevo sin problemas visuales
+      await Future.delayed(const Duration(seconds: 2));
+      emit(state.copyWith(saveStatus: SaveStatus.initial));
+
+    } catch (e) {
+      debugPrint("Error al guardar: $e");
+      emit(state.copyWith(saveStatus: SaveStatus.failure));
+    }
   }
 
   // Añadir trazo completo

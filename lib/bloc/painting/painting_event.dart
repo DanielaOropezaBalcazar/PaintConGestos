@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import '../../models/paint_stroke.dart';
@@ -73,4 +74,13 @@ class UpdateGestureMessage extends PaintingEvent {
 
   @override
   List<Object?> get props => [message];
+}
+
+class SaveImageToGallery extends PaintingEvent {
+  final Uint8List imageBytes;
+
+  const SaveImageToGallery(this.imageBytes);
+
+  @override
+  List<Object?> get props => [imageBytes];
 }
