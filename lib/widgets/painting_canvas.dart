@@ -8,8 +8,9 @@ class PaintingCanvas extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
     return CustomPaint(
-      painter: _PaintingCanvasPainter(strokes: strokes),
+      painter: _PaintingCanvasPainter(strokes: strokes, backgroundColor: backgroundColor),
       size: Size.infinite,
     );
   }
@@ -17,14 +18,15 @@ class PaintingCanvas extends StatelessWidget {
 
 class _PaintingCanvasPainter extends CustomPainter {
   final List<PaintStroke> strokes;
+  final Color backgroundColor;
 
-  _PaintingCanvasPainter({required this.strokes});
+  _PaintingCanvasPainter({required this.strokes, required this.backgroundColor});
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Fondo blanco
+    // Fondo dinámico según el tema
     final backgroundPaint = Paint()
-      ..color = Colors.white
+      ..color = backgroundColor
       ..style = PaintingStyle.fill;
     
     canvas.drawRect(
@@ -37,7 +39,7 @@ class _PaintingCanvasPainter extends CustomPainter {
       if (stroke.points.length < 2) continue;
       
       final paint = Paint()
-        ..color = stroke.isErasing ? Colors.white : stroke.color
+        ..color = stroke.isErasing ? backgroundColor : stroke.color
         ..strokeWidth = stroke.strokeWidth
         ..strokeCap = StrokeCap.round
         ..style = PaintingStyle.stroke;

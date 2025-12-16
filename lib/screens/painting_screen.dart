@@ -10,6 +10,9 @@ import '../bloc/gesture/gesture_state.dart' as gesture_state;
 import '../bloc/painting/painting_bloc.dart';
 import '../bloc/painting/painting_event.dart';
 import '../bloc/painting/painting_state.dart';
+import '../bloc/theme/theme_bloc.dart';
+import '../bloc/theme/theme_event.dart';
+import '../bloc/theme/theme_state.dart';
 import '../widgets/painting_canvas.dart';
 import '../widgets/camera_preview_widget.dart';
 import '../widgets/face_info_widget.dart';
@@ -17,7 +20,7 @@ import '../widgets/color_palette_widget.dart';
 
 class PaintingScreen extends StatefulWidget {
   final List<CameraDescription> cameras;
-  
+
   const PaintingScreen({super.key, required this.cameras});
 
   @override
@@ -37,67 +40,96 @@ class _PaintingScreenState extends State<PaintingScreen> {
     return Scaffold(
       body: SafeArea(
         child: Column(
-          children: [
-            _buildAppBar(),
-            _buildCanvas(),
-            _buildControlPanel(),
-          ],
+          children: [_buildAppBar(), _buildCanvas(), _buildControlPanel()],
         ),
       ),
     );
   }
 
   Widget _buildAppBar() {
-    return Container(
-      height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      color: const Color.fromARGB(199, 46, 43, 121),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text(
-            '🎨 Pintura con Gestos',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+    return BlocBuilder<ThemeBloc, ThemeState>(
+      builder: (context, themeState) {
+        return Container(
+          height: 56,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          color: themeState.themeData.appBarTheme.backgroundColor,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                '🎨 Pinta con Gestos',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              BlocBuilder<PaintingBloc, PaintingState>(
+                builder: (context, state) {
+                  return Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          state.isErasing ? Icons.brush : Icons.auto_delete,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        onPressed: () {
+                          context.read<PaintingBloc>().add(
+                            const ToggleEraser(),
+                          );
+                        },
+                        tooltip: state.isErasing ? 'Pincel' : 'Goma',
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.undo,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        onPressed: () {
+                          context.read<PaintingBloc>().add(const UndoStroke());
+                        },
+                        tooltip: 'Deshacer',
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.delete,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        onPressed: () {
+                          context.read<PaintingBloc>().add(const ClearCanvas());
+                        },
+                        tooltip: 'Limpiar',
+                      ),
+                      BlocBuilder<ThemeBloc, ThemeState>(
+                        builder: (context, themeState) {
+                          return IconButton(
+                            icon: Icon(
+                              themeState is LightTheme
+                                  ? Icons.dark_mode
+                                  : Icons.light_mode,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                            onPressed: () {
+                              context.read<ThemeBloc>().add(ToggleTheme());
+                            },
+                            tooltip: themeState is LightTheme
+                                ? 'Modo Oscuro'
+                                : 'Modo Claro',
+                          );
+                        },
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
           ),
-          BlocBuilder<PaintingBloc, PaintingState>(
-            builder: (context, state) {
-              return Row(
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      state.isErasing ? Icons.brush : Icons.auto_delete,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                    onPressed: () {
-                      context.read<PaintingBloc>().add(const ToggleEraser());
-                    },
-                    tooltip: state.isErasing ? 'Pincel' : 'Goma',
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.undo, color: Colors.white, size: 20),
-                    onPressed: () {
-                      context.read<PaintingBloc>().add(const UndoStroke());
-                    },
-                    tooltip: 'Deshacer',
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.white, size: 20),
-                    onPressed: () {
-                      context.read<PaintingBloc>().add(const ClearCanvas());
-                    },
-                    tooltip: 'Limpiar',
-                  ),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -115,29 +147,35 @@ class _PaintingScreenState extends State<PaintingScreen> {
   }
 
   Widget _buildControlPanel() {
-    return Container(
-      height: 280,
-      color: Colors.grey.shade100,
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            children: [
-              _buildModeIndicator(),
-              const SizedBox(height: 10),
-              _buildStrokeWidthSlider(),
-              const SizedBox(height: 8),
-              const ColorPaletteWidget(),
-              const SizedBox(height: 12),
-              const Divider(height: 1),
-              const SizedBox(height: 10),
-              const CameraPreviewWidget(),
-              const SizedBox(height: 10),
-              const FaceInfoWidget(),
-            ],
+    return BlocBuilder<ThemeBloc, ThemeState>(
+      builder: (context, themeState) {
+        return Container(
+          height: 280,
+          color: themeState is LightTheme
+              ? Colors.grey.shade100
+              : themeState.themeData.appBarTheme.backgroundColor,
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                children: [
+                  _buildModeIndicator(),
+                  const SizedBox(height: 10),
+                  _buildStrokeWidthSlider(),
+                  const SizedBox(height: 8),
+                  const ColorPaletteWidget(),
+                  const SizedBox(height: 12),
+                  const Divider(height: 1),
+                  const SizedBox(height: 10),
+                  const CameraPreviewWidget(),
+                  const SizedBox(height: 10),
+                  const FaceInfoWidget(),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -147,7 +185,9 @@ class _PaintingScreenState extends State<PaintingScreen> {
         return Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: state.isErasing ? Colors.red.shade100 : Colors.blue.shade100,
+            color: state.isErasing
+                ? const Color.fromARGB(255, 253, 196, 217)
+                : Colors.blue.shade100,
             borderRadius: BorderRadius.circular(6),
           ),
           child: Row(
@@ -155,18 +195,18 @@ class _PaintingScreenState extends State<PaintingScreen> {
             children: [
               Icon(
                 state.isErasing ? Icons.auto_delete : Icons.brush,
-                color: state.isErasing 
-                    ? const Color.fromARGB(255, 206, 134, 172) 
-                    : const Color.fromARGB(199, 46, 43, 121),
+                color: state.isErasing
+                    ? const Color.fromARGB(255, 165, 53, 113)
+                    : const Color.fromARGB(233, 46, 43, 121),
                 size: 18,
               ),
               const SizedBox(width: 8),
               Text(
                 state.isErasing ? 'Modo Goma' : 'Modo Pincel',
                 style: TextStyle(
-                  color: state.isErasing 
-                      ? const Color.fromARGB(255, 206, 134, 172) 
-                      : const Color.fromARGB(199, 46, 43, 121),
+                  color: state.isErasing
+                      ? const Color.fromARGB(255, 165, 53, 113)
+                      : const Color.fromARGB(233, 46, 43, 121),
                   fontWeight: FontWeight.bold,
                   fontSize: 13,
                 ),
@@ -223,7 +263,9 @@ class GestureToPaintingListener extends StatelessWidget {
         switch (gestureState.action) {
           case gesture_state.GestureAction.paint:
             if (gestureState.paintPoints != null) {
-              paintingBloc.add(AddPointsToCurrentStroke(gestureState.paintPoints!));
+              paintingBloc.add(
+                AddPointsToCurrentStroke(gestureState.paintPoints!),
+              );
             }
             break;
           case gesture_state.GestureAction.toggleEraser:
@@ -260,12 +302,14 @@ class FaceToGestureListener extends StatelessWidget {
     return BlocListener<CameraBloc, CameraState>(
       listener: (context, cameraState) {
         final gestureBloc = context.read<GestureBloc>();
-        
+
         if (cameraState.currentFace != null) {
-          gestureBloc.add(ProcessFaceGesture(
-            face: cameraState.currentFace!,
-            screenSize: MediaQuery.of(context).size,
-          ));
+          gestureBloc.add(
+            ProcessFaceGesture(
+              face: cameraState.currentFace!,
+              screenSize: MediaQuery.of(context).size,
+            ),
+          );
         } else {
           gestureBloc.add(const NoFaceDetected());
         }

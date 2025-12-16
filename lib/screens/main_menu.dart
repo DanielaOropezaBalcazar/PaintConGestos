@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../bloc/camera/camera_bloc.dart';
-import '../bloc/gesture/gesture_bloc.dart';
-import '../bloc/painting/painting_bloc.dart';
 import '../repositories/camera_repository.dart';
 import '../repositories/gesture_repository.dart';
 import 'painting_screen.dart';
@@ -101,37 +97,9 @@ class MainMenu extends StatelessWidget {
 
   /// Crea la pantalla de pintura con todos los BLoCs
   Widget _buildPaintingScreenWithBlocs() {
-    final cameraRepository = CameraRepository();
-    final gestureRepository = GestureRepository(
-      colors: const [
-        Colors.red,
-        Colors.blue,
-        Colors.green,
-        Colors.yellow,
-        Colors.purple,
-        Colors.orange,
-        Colors.pink,
-        Colors.teal,
-        Colors.black,
-      ],
-    );
-
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider<CameraBloc>(
-          create: (context) => CameraBloc(cameraRepository: cameraRepository),
-        ),
-        BlocProvider<GestureBloc>(
-          create: (context) => GestureBloc(gestureRepository: gestureRepository),
-        ),
-        BlocProvider<PaintingBloc>(
-          create: (context) => PaintingBloc(),
-        ),
-      ],
-      child: FaceToGestureListener(
-        child: GestureToPaintingListener(
-          child: PaintingScreen(cameras: cameras),
-        ),
+    return FaceToGestureListener(
+      child: GestureToPaintingListener(
+        child: PaintingScreen(cameras: cameras),
       ),
     );
   }
